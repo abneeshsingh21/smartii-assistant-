@@ -86,6 +86,12 @@ function initSpeechRecognition() {
         console.log('📢 Speak now! The browser is listening for your voice...');
         state.isListening = true;
         state.isRecognitionActive = true;
+        
+        // Single haptic feedback on mobile when actually listening
+        if (navigator.vibrate) {
+            navigator.vibrate(30);  // Short 30ms haptic feedback
+        }
+        
         elements.micButton.classList.add('listening');
         elements.waveformContainer.classList.add('active');
         elements.listeningText.textContent = 'Listening... Speak now!';
@@ -302,9 +308,18 @@ function startListening(continuous = false) {
         return;
     }
     
-    // Don't start if already listening
+    // Stop any existing recognition first
     if (state.isRecognitionActive) {
-        console.warn('Recognition already active, skipping start');
+        console.warn('Recognition already active, stopping first');
+        try {
+            state.recognition.stop();
+        } catch (e) {
+            console.log('Error stopping existing recognition:', e);
+        }
+        // Wait a bit before restarting
+        setTimeout(() => {
+            startListening(continuous);
+        }, 300);
         return;
     }
     
@@ -314,7 +329,11 @@ function startListening(continuous = false) {
     
     console.log(`🎤 Starting recognition - Continuous: ${continuous}, isListening: ${state.isListening}`);
     
-    // Update UI based on mode
+    // Update UI immediately
+    elements.micButton.classList.add('listening');
+    elements.waveformContainer.classList.add('active');
+    startWaveformAnimation();
+    
     if (continuous) {
         elements.listeningText.textContent = '🔴 Continuous Listening';
         updateStatus('🔴 Continuous mode - Always listening', 'success');
@@ -327,16 +346,29 @@ function startListening(continuous = false) {
     try {
         console.log(`Starting speech recognition... (${continuous ? 'continuous' : 'single-shot'} mode)`);
         state.recognition.start();
+        state.isRecognitionActive = true;
         console.log('✅ Recognition start() called successfully');
     } catch (error) {
         console.error('❌ Failed to start recognition:', error);
+        
+        // Reset UI on error
+        elements.micButton.classList.remove('listening');
+        elements.waveformContainer.classList.remove('active');
+        stopWaveformAnimation();
+        state.isListening = false;
+        state.isRecognitionActive = false;
         
         // Check if it's a permission issue
         if (error.message && error.message.includes('permission')) {
             updateStatus('Microphone access denied', 'error');
             alert('SMARTII needs microphone access. Please allow microphone permissions in your browser.');
         } else if (error.message && error.message.includes('already started')) {
-            console.warn('Recognition already started');
+            console.warn('Recognition already started, retrying...');
+            // Force retry
+            setTimeout(() => {
+                state.isRecognitionActive = false;
+                startListening(continuous);
+            }, 500);
         } else {
             updateStatus('Failed to start: ' + error.message, 'error');
         }
@@ -936,10 +968,7 @@ function setupEventListeners() {
     // Microphone button
     if (elements.micButton) {
         elements.micButton.addEventListener('click', () => {
-            // Haptic feedback on mobile
-            if (navigator.vibrate) {
-                navigator.vibrate(50);  // 50ms vibration
-            }
+            // Removed vibration from here - will vibrate only when recognition actually starts
             toggleListening();
         });
     }
