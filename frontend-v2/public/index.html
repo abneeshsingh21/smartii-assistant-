@@ -2,9 +2,12 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="description" content="SMARTII - Your JARVIS-level AI Voice Assistant">
     <meta name="theme-color" content="#0a0e27">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="mobile-web-app-capable" content="yes">
     <title>SMARTII - AI Voice Assistant</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -107,9 +110,14 @@
                         Tap to speak
                     </div>
                     
-                    <!-- Keyboard Shortcuts Hint -->
-                    <div style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.4); text-align: center;">
+                    <!-- Keyboard Shortcuts Hint (Desktop only) -->
+                    <div id="shortcutsHint" style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; display: none;">
                         💡 <strong>Spacebar</strong> to toggle mic | <strong>Ctrl+Shift+L</strong> for continuous mode
+                    </div>
+                    
+                    <!-- Mobile Hint -->
+                    <div id="mobileHint" style="margin-top: 10px; font-size: 12px; color: rgba(255,255,255,0.4); text-align: center; display: none;">
+                        💡 Tap mic for continuous listening | Tap again to stop
                     </div>
                 </div>
 

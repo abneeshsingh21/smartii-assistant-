@@ -3,6 +3,22 @@
    Modern, Futuristic, Glassmorphism Design
    ============================================ */
 
+/* ============= Mobile Optimizations ============= */
+* {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+}
+
+/* Prevent zoom on input focus (mobile) */
+input, textarea, select {
+    font-size: 16px !important;
+}
+
+/* Smooth scrolling for mobile */
+html {
+    -webkit-overflow-scrolling: touch;
+}
+
 /* ============= CSS Variables ============= */
 :root {
     /* Colors - Dark Mode */
@@ -1296,16 +1312,25 @@ body.light-mode .moon-icon {
     }
     
     .mic-button {
-        width: 90px;
-        height: 90px;
+        width: 100px;  /* Larger for easier tapping */
+        height: 100px;
+        touch-action: manipulation;  /* Prevent double-tap zoom */
+    }
+    
+    .send-button {
+        min-height: 48px;  /* Minimum touch target size */
+        touch-action: manipulation;
     }
     
     .chat-input {
         flex-direction: column;
     }
     
-    .send-button {
-        width: 100%;
+    /* Improve touch targets for all buttons */
+    button {
+        min-height: 44px;
+        min-width: 44px;
+        touch-action: manipulation;
     }
 }
 

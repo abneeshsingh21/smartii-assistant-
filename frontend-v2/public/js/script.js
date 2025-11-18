@@ -275,7 +275,11 @@ function toggleListening() {
     if (state.isListening) {
         stopListening();
     } else {
-        startListening();
+        // Check if mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        // On mobile, default to continuous mode for better UX
+        startListening(isMobile);
     }
 }
 
@@ -911,7 +915,13 @@ function formatTime(date) {
 function setupEventListeners() {
     // Microphone button
     if (elements.micButton) {
-        elements.micButton.addEventListener('click', toggleListening);
+        elements.micButton.addEventListener('click', () => {
+            // Haptic feedback on mobile
+            if (navigator.vibrate) {
+                navigator.vibrate(50);  // 50ms vibration
+            }
+            toggleListening();
+        });
     }
     
     // Text input
@@ -928,6 +938,10 @@ function setupEventListeners() {
     // Send button
     if (elements.sendButton) {
         elements.sendButton.addEventListener('click', () => {
+            // Haptic feedback
+            if (navigator.vibrate) {
+                navigator.vibrate(30);
+            }
             const text = elements.textInput.value;
             processUserMessage(text);
         });
@@ -1048,6 +1062,20 @@ function initWakeWordDetection() {
 
 async function init() {
     console.log('🚀 SMARTII UI Initializing...');
+    
+    // Detect mobile device
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+    // Show appropriate hint based on device
+    if (isMobile) {
+        const mobileHint = document.getElementById('mobileHint');
+        if (mobileHint) mobileHint.style.display = 'block';
+        console.log('📱 Mobile device detected - optimized for touch');
+    } else {
+        const shortcutsHint = document.getElementById('shortcutsHint');
+        if (shortcutsHint) shortcutsHint.style.display = 'block';
+        console.log('💻 Desktop detected - keyboard shortcuts enabled');
+    }
     
     // Load theme
     loadTheme();
