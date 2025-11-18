@@ -97,10 +97,7 @@ function initSpeechRecognition() {
         state.isListening = true;
         state.isRecognitionActive = true;
         
-        // Single haptic feedback on mobile when actually listening
-        if (navigator.vibrate) {
-            navigator.vibrate(30);  // Short 30ms haptic feedback
-        }
+        // Removed haptic feedback to prevent collision/fast sounds
         
         elements.micButton.classList.add('listening');
         elements.waveformContainer.classList.add('active');
