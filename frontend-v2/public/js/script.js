@@ -72,6 +72,25 @@ const elements = {
     menuToggle: document.getElementById('menuToggle')
 };
 
+// ============= Microphone Test =============
+async function testMicrophone() {
+    try {
+        console.log('🎤 Testing microphone access...');
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        console.log('✅ Microphone access granted!');
+        console.log('📊 Audio tracks:', stream.getAudioTracks());
+        stream.getTracks().forEach(track => {
+            console.log('Track:', track.label, 'Enabled:', track.enabled, 'Ready:', track.readyState);
+            track.stop();
+        });
+        return true;
+    } catch (error) {
+        console.error('❌ Microphone access failed:', error);
+        alert('Microphone test failed: ' + error.message + '\n\nPlease:\n1. Check if microphone is connected\n2. Allow microphone permission in browser\n3. Close other apps using microphone');
+        return false;
+    }
+}
+
 // ============= Speech Recognition Setup =============
 function initSpeechRecognition() {
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -322,21 +341,35 @@ function startListening(continuous = false) {
         continuousListening: state.continuousListening
     });
     
-    // Stop any existing recognition first
-    if (state.isRecognitionActive) {
-        console.warn('Recognition already active, stopping first');
-        try {
-            state.recognition.stop();
-        } catch (e) {
-            console.log('Error stopping existing recognition:', e);
+    // Test microphone first
+    testMicrophone().then(micOk => {
+        if (!micOk) {
+            console.error('❌ Microphone test failed, aborting...');
+            return;
         }
-        // Wait a bit before restarting
-        setTimeout(() => {
-            startListening(continuous);
-        }, 300);
-        return;
-    }
-    
+        
+        console.log('✅ Microphone test passed, starting recognition...');
+        
+        // Stop any existing recognition first
+        if (state.isRecognitionActive) {
+            console.warn('Recognition already active, stopping first');
+            try {
+                state.recognition.stop();
+            } catch (e) {
+                console.log('Error stopping existing recognition:', e);
+            }
+            // Wait a bit before restarting
+            setTimeout(() => {
+                startListeningInternal(continuous);
+            }, 300);
+            return;
+        }
+        
+        startListeningInternal(continuous);
+    });
+}
+
+function startListeningInternal(continuous = false) {
     // Set continuous mode
     state.continuousListening = continuous;
     state.isListening = true;
@@ -387,7 +420,7 @@ function startListening(continuous = false) {
             // Force retry
             setTimeout(() => {
                 state.isRecognitionActive = false;
-                startListening(continuous);
+                startListeningInternal(continuous);
             }, 500);
         } else {
             updateStatus('Failed to start: ' + error.message, 'error');
