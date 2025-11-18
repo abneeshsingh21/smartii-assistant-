@@ -228,18 +228,18 @@ function initSpeechRecognition() {
     };
     
     state.recognition.onend = () => {
-        console.log('👂 Recognition ended. Listening state:', state.isListening);
+        console.log('👂 Recognition ended. Listening state:', state.isListening, 'Continuous:', state.continuousListening, 'Speaking:', state.isSpeaking);
         state.isRecognitionActive = false;
         
-        // Restart if still supposed to be listening (both continuous and single-shot mode)
-        if (state.isListening && !state.isSpeaking) {
+        // Only restart if in continuous mode AND not currently speaking
+        if (state.isListening && state.continuousListening && !state.isSpeaking) {
             try {
-                console.log('🔄 Restarting recognition to keep listening...');
+                console.log('🔄 Restarting continuous recognition...');
                 setTimeout(() => {
-                    if (state.isListening && !state.isRecognitionActive) {
+                    if (state.isListening && state.continuousListening && !state.isRecognitionActive && !state.isSpeaking) {
                         state.recognition.start();
                     }
-                }, 100);  // Quick restart
+                }, 500);  // Longer delay to avoid hearing own voice
             } catch (error) {
                 console.error('Failed to restart recognition:', error);
             }
@@ -695,31 +695,36 @@ function speakText(text) {
         console.log('🔊 Speech finished');
         state.isSpeaking = false;
         
-        if (state.settings.alwaysListening) {
-            setTimeout(() => {
-                console.log('🔄 Restarting listening after speech...');
-                startListening();
-                
-                // Restart wake word detection
+        // Wait longer to ensure audio output has fully stopped
+        setTimeout(() => {
+            if (state.settings.alwaysListening && !state.isSpeaking) {
+                console.log('🔄 Restarting continuous listening after speech...');
+                startListening(true); // Pass true for continuous mode
+            } else {
+                console.log('✅ Speech ended - NOT restarting (continuous mode OFF)');
+                // Just restart wake word detection for button activation
                 if (wakeWordDetector && !wakeWordDetector.isActive) {
                     wakeWordDetector.start();
                     console.log('✅ Wake word detection resumed');
                 }
-            }, 2000);
-        }
+            }
+        }, 3000); // Longer delay to avoid hearing own voice
     };
     
     utterance.onerror = (event) => {
         console.error('🔊 Speech error:', event);
         state.isSpeaking = false;
         
-        if (state.settings.alwaysListening) {
+        // Only restart on error if continuous mode is explicitly enabled
+        if (state.settings.alwaysListening && !state.isSpeaking) {
             setTimeout(() => {
-                startListening();
-                if (wakeWordDetector && !wakeWordDetector.isActive) {
-                    wakeWordDetector.start();
-                }
-            }, 1500);
+                startListening(true);
+            }, 2000);
+        } else {
+            // Restart wake word only
+            if (wakeWordDetector && !wakeWordDetector.isActive) {
+                wakeWordDetector.start();
+            }
         }
     };
     
