@@ -4,6 +4,16 @@
  */
 
 // ============= Configuration =============
+// Get or create persistent client ID
+function getClientId() {
+    let clientId = localStorage.getItem('smartii_client_id');
+    if (!clientId) {
+        clientId = 'client_' + Math.random().toString(36).substring(7) + '_' + Date.now();
+        localStorage.setItem('smartii_client_id', clientId);
+    }
+    return clientId;
+}
+
 const CONFIG = {
     // Backend URL - Change this when deploying to production
     API_BASE_URL: window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
@@ -14,7 +24,7 @@ const CONFIG = {
         : 'wss://smartii.onrender.com/ws',  // Your actual backend URL
     ANIMATION_ENABLED: true,
     AUTO_SCROLL: true,
-    CLIENT_ID: 'client_' + Math.random().toString(36).substring(7)
+    CLIENT_ID: getClientId()  // Now persistent across sessions
 };
 
 // ============= State Management =============
