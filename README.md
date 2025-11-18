@@ -6,6 +6,33 @@
 
 SMARTII is a next-generation AI voice assistant with RAG-powered web search, code execution, multi-language translation, file management, and smart automation - all accessible from any device!
 
+---
+
+## 🖥️ **DESKTOP VERSION - NO VS CODE NEEDED!**
+
+### **⚡ One-Click Installation (Windows)**
+
+**Just run the installer - that's it!**
+
+1. **Right-click** `INSTALL.ps1` → Select **"Run with PowerShell"**
+2. Wait for automatic installation
+3. Double-click **SMARTII** desktop icon to start
+4. Say **"Hey SMARTII, hello!"** to test
+
+**What you get:**
+- ✅ Always-on voice assistant (works when screen is locked!)
+- ✅ System tray integration (lives in background)
+- ✅ Auto-start on Windows boot
+- ✅ Full system control (open apps, search web, play music)
+- ✅ Ctrl+Space hotkey activation
+- ✅ Web interface at http://localhost:3000
+
+**No coding needed. No VS Code. Just double-click and go!**
+
+📖 **[Desktop Setup Guide](desktop/README.md)**
+
+---
+
 ## ✨ Key Features
 
 ### 🎙️ **Voice Control**
