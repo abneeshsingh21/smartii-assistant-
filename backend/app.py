@@ -342,45 +342,46 @@ async def chat(request: dict):
         
         context = await conversation_handler.get_context(client_id)
         
-        # Check if message is a music/YouTube play request
-        if any(keyword in message.lower() for keyword in ['play', 'music', 'song', 'video']):
-            # Extract query
-            import re
-            # Remove common command words
-            query = message.lower()
-            for word in ['play', 'music', 'song', 'video', 'the', 'a', 'an', 'some']:
-                query = re.sub(rf'\b{word}\b', '', query, flags=re.IGNORECASE)
-            query = query.strip()
-            
-            if query:
-                # Call music_play tool directly
-                tool_orchestrator = ToolOrchestrator()
-                result = await tool_orchestrator.music_play({"query": query}, {})
-                
-                response = await ai_engine.process_message(message, context, client_id)
-                await conversation_handler.update_conversation(client_id, message, response)
-                
-                # Return response with URL if available
-                return {
-                    "response": response,
-                    "text": response,
-                    "client_id": client_id,
-                    "url": result.get("url"),
-                    "open_url": result.get("status") in ["playing", "search"],
-                    "video_id": result.get("video_id")
-                }
-        
-        # Normal processing for other messages
+        # Process message
         response = await ai_engine.process_message(message, context, client_id)
         await conversation_handler.update_conversation(client_id, message, response)
         
         # Increment user interaction count
         user_profile_manager.increment_interaction(client_id)
         
+        # Check if any tool event has a URL to open (music, video, etc.)
+        url_to_open = None
+        video_id = None
+        should_open = False
+        
+        events = ai_engine.get_last_tool_events()
+        for event in events:
+            result = event.get("result", {})
+            if isinstance(result, dict):
+                # Check nested result
+                nested_result = result.get("result", {})
+                if isinstance(nested_result, dict):
+                    if nested_result.get("url") and nested_result.get("open_url"):
+                        url_to_open = nested_result.get("url")
+                        video_id = nested_result.get("video_id")
+                        should_open = True
+                        logger.info(f"Found URL in nested result: {url_to_open}")
+                        break
+                # Check direct result
+                elif result.get("url") and result.get("open_url"):
+                    url_to_open = result.get("url")
+                    video_id = result.get("video_id")
+                    should_open = True
+                    logger.info(f"Found URL in direct result: {url_to_open}")
+                    break
+        
         return {
             "response": response,
             "text": response,
-            "client_id": client_id
+            "client_id": client_id,
+            "url": url_to_open,
+            "open_url": should_open,
+            "video_id": video_id
         }
     except Exception as e:
         logger.error(f"/chat error: {e}")

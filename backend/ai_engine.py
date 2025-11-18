@@ -48,6 +48,9 @@ class SmartiiAIEngine:
         self.offline_mode = False
         self.performance_metrics = {"requests": 0, "successes": 0, "failures": 0, "avg_response_time": 0}
         
+        # Store last tool events for retrieval
+        self._last_tool_events = []
+        
         # Multi-language execution capabilities
         self.execution_engines = {
             "python": {"available": True, "priority": 1},
@@ -132,6 +135,10 @@ class SmartiiAIEngine:
 
             # 3) Attempt automatic tool selection and execution when applicable
             tool_summary, tool_events = await self._auto_select_and_execute_tools(message, client_id)
+            
+            # Store events for retrieval
+            self._last_tool_events = tool_events
+            
             if tool_summary:
                 # Add empathetic response based on sentiment
                 if sentiment['overall'] == 'negative':
@@ -206,12 +213,17 @@ class SmartiiAIEngine:
         except Exception as e:
             logger.error(f"Error processing message: {e}")
             self.performance_metrics["failures"] += 1
+            self._last_tool_events = []  # Clear on error
             
             # Graceful error handling with empathy
             if context.get('current_sentiment', {}).get('overall') == 'negative':
                 return "I'm really sorry, I'm having trouble processing that right now. I know this is frustrating. Could you try rephrasing it, or let me know if there's something else I can help with?"
             else:
                 return "I apologize, but I encountered an error processing your request. Could you please try again or rephrase your question?"
+    
+    def get_last_tool_events(self) -> list:
+        """Get the last tool execution events (includes URLs for music/video)."""
+        return self._last_tool_events
 
     async def _call_groq_api(self, message: str, context: Dict[str, Any]) -> str:
         """Call Groq API for fast AI responses."""

@@ -498,8 +498,25 @@ async function processUserMessage(text) {
         
         // Handle special actions (like opening URLs)
         if (response.url && response.open_url) {
-            // Open YouTube or other URLs in new tab
-            window.open(response.url, '_blank');
+            // For mobile: Use location.href instead of window.open to avoid popup blockers
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            
+            if (isMobile) {
+                console.log('📱 Mobile detected - opening URL directly:', response.url);
+                // Small delay to ensure message is visible
+                setTimeout(() => {
+                    window.location.href = response.url;
+                }, 500);
+            } else {
+                // Desktop: Open in new tab
+                console.log('💻 Desktop - opening in new tab:', response.url);
+                const newWindow = window.open(response.url, '_blank');
+                if (!newWindow || newWindow.closed || typeof newWindow.closed == 'undefined') {
+                    // Popup blocked, try location.href
+                    console.log('⚠️ Popup blocked, using location.href');
+                    window.location.href = response.url;
+                }
+            }
         }
         
         // Speak response if TTS is enabled
