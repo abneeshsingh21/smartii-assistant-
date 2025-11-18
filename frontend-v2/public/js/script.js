@@ -363,6 +363,12 @@ async function processUserMessage(text) {
         // Add assistant response
         addMessage(response.text, 'assistant');
         
+        // Handle special actions (like opening URLs)
+        if (response.url && response.open_url) {
+            // Open YouTube or other URLs in new tab
+            window.open(response.url, '_blank');
+        }
+        
         // Speak response if TTS is enabled
         if (state.settings.voiceEnabled) {
             speakText(response.text);

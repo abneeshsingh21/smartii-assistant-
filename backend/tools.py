@@ -575,89 +575,54 @@ class ToolOrchestrator:
             if not song_query:
                 return {"status": "error", "message": "No song specified"}
 
-            # Search YouTube and get the first video to play directly
+            # Search YouTube and get video URL
             from urllib.parse import quote
-            import subprocess
             import platform
             import requests
             
             try:
-                # Try to get video ID using YouTube search
-                # Note: This is a simple approach. For production, use YouTube Data API
+                # Search YouTube for the video
                 search_url = f"https://www.youtube.com/results?search_query={quote(song_query)}"
                 
-                # For now, use a direct approach: construct an embedded player URL
-                # This will search and autoplay the first result
-                encoded_query = quote(song_query)
+                # Try to get the first video ID
+                try:
+                    import re
+                    resp = requests.get(search_url, timeout=5, headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+                    })
+                    # Find first video ID in search results
+                    video_ids = re.findall(r'"videoId":"([^"]+)"', resp.text)
+                    if video_ids:
+                        video_id = video_ids[0]
+                        video_url = f"https://www.youtube.com/watch?v={video_id}"
+                        logger.info(f"Found YouTube video: {video_id} for '{song_query}'")
+                        
+                        # On cloud/web deployment, return URL to frontend
+                        # Frontend will handle opening in new tab
+                        return {
+                            "status": "playing",
+                            "song": song_query,
+                            "url": video_url,
+                            "video_id": video_id,
+                            "open_url": True,  # Signal frontend to open URL
+                            "message": f"🎵 Playing '{song_query}' on YouTube!"
+                        }
+                except Exception as e:
+                    logger.warning(f"Could not fetch video ID: {e}")
                 
-                # Use YouTube's search with autoplay - opens first video directly
-                # Format: youtube.com/results?search_query=QUERY then auto-clicks first result
-                video_url = f"https://www.youtube.com/results?search_query={encoded_query}&autoplay=1"
-                
-                # Better approach: Use ytsearch: protocol if available, or open first video
-                # For reliable autoplay, we'll use a different approach with PowerShell
-                
-                if platform.system() == "Windows":
-                    # PowerShell script to search YouTube, get first video, and play it
-                    ps_script = f'''
-$query = "{song_query.replace('"', '`"')}"
-$searchUrl = "https://www.youtube.com/results?search_query=" + [System.Uri]::EscapeDataString($query)
-Start-Process chrome $searchUrl
-Start-Sleep -Milliseconds 1500
-# Simulate Enter key to play first video
-Add-Type -AssemblyName System.Windows.Forms
-[System.Windows.Forms.SendKeys]::SendWait("{{TAB}}{{TAB}}{{TAB}}{{ENTER}}")
-'''
-                    # Simple approach: Just open the search and let user click
-                    # Or use a YouTube video search API
-                    
-                    # Best approach for Windows: Use youtube-dl URL format or direct video link
-                    # For now, open YouTube with search query that auto-selects first result
-                    command = f'powershell -Command "Start-Process chrome \\"{video_url}\\""'
-                    
-                    # Even better: Search via API and get first video ID
-                    try:
-                        # Try to scrape first video ID (basic approach without API key)
-                        import re
-                        resp = requests.get(search_url, timeout=5)
-                        # Find first video ID in search results
-                        video_ids = re.findall(r'"videoId":"([^"]+)"', resp.text)
-                        if video_ids:
-                            video_id = video_ids[0]
-                            # Open video directly with autoplay
-                            video_url = f"https://www.youtube.com/watch?v={video_id}&autoplay=1"
-                            command = f'start chrome "{video_url}"'
-                            logger.info(f"Playing YouTube video: {video_id}")
-                    except:
-                        # Fallback to search page
-                        command = f'start chrome "{video_url}"'
-                    
-                    result = subprocess.run(command, shell=True, capture_output=True, text=True, timeout=10)
-                    logger.info(f"Executed music command: {command}, returncode: {result.returncode}")
-                else:
-                    # Linux/Mac
-                    result = subprocess.run(["xdg-open", video_url], capture_output=True, text=True, timeout=10)
-
+                # Fallback: Return search URL
+                fallback_url = f"https://www.youtube.com/results?search_query={quote(song_query)}"
                 return {
-                    "status": "playing",
+                    "status": "search",
                     "song": song_query,
-                    "url": video_url,
-                    "message": f"Playing '{song_query}' on YouTube",
-                    "autoplay": autoplay
+                    "url": fallback_url,
+                    "open_url": True,
+                    "message": f"🔍 Search results for '{song_query}' on YouTube"
                 }
 
             except Exception as e:
-                logger.error(f"Error searching/playing video: {e}")
-                # Fallback: just open YouTube search
-                fallback_url = f"https://www.youtube.com/results?search_query={quote(song_query)}"
-                command = f'start chrome "{fallback_url}"'
-                subprocess.run(command, shell=True, timeout=10)
-                return {
-                    "status": "opened",
-                    "song": song_query,
-                    "url": fallback_url,
-                    "message": f"Opened YouTube search for '{song_query}'. Please click the first video to play."
-                }
+                logger.error(f"Error searching video: {e}")
+                return {"status": "error", "message": f"Could not search YouTube: {str(e)}"}
 
         except Exception as e:
             logger.error(f"Error playing music: {e}")
