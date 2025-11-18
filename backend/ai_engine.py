@@ -279,12 +279,12 @@ Always prefer using tools for factual information rather than guessing."""}
             # Add current message
             messages.append({"role": "user", "content": message})
 
-            # Call Groq API
+            # Call Groq API with faster, cheaper model
             response = self.groq_client.chat.completions.create(
-                model="llama-3.3-70b-versatile",  # Updated model
+                model="llama-3.1-8b-instant",  # Much faster and uses fewer tokens
                 messages=messages,
-                max_tokens=150,  # Balanced for quality and speed
-                temperature=0.7  # Balanced for natural conversation
+                max_tokens=100,  # Reduced for faster responses
+                temperature=0.7
             )
 
             return response.choices[0].message.content.strip()
