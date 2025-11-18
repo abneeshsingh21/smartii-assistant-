@@ -8,6 +8,12 @@
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="mobile-web-app-capable" content="yes">
+    
+    <!-- Disable back/forward cache to allow SpeechRecognition -->
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    
     <title>SMARTII - AI Voice Assistant</title>
     <link rel="stylesheet" href="/css/style.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -670,6 +676,18 @@
     </div>
 
     <!-- Scripts -->
+    <script>
+        // Prevent back/forward cache to allow SpeechRecognition
+        window.addEventListener('pageshow', function(event) {
+            if (event.persisted) {
+                console.log('⚠️ Page loaded from cache, reloading...');
+                window.location.reload();
+            }
+        });
+        
+        // Keep page alive to prevent bfcache
+        window.addEventListener('unload', function() {});
+    </script>
     <script type="module" src="/js/3d-visualization.js"></script>
     <script src="/js/wake-word-detector.js"></script>
     <script src="/js/full-duplex-audio.js"></script>
