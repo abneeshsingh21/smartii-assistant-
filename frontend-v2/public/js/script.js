@@ -5,8 +5,13 @@
 
 // ============= Configuration =============
 const CONFIG = {
-    API_BASE_URL: 'http://localhost:8000',  // Real backend API
-    BACKEND_WS_URL: 'ws://localhost:8000/ws',
+    // Backend URL - Change this when deploying to production
+    API_BASE_URL: window.location.hostname === 'localhost' 
+        ? 'http://localhost:8000' 
+        : 'https://smartii-backend.onrender.com',  // Replace with your backend URL
+    BACKEND_WS_URL: window.location.hostname === 'localhost'
+        ? 'ws://localhost:8000/ws'
+        : 'wss://smartii-backend.onrender.com/ws',  // Replace with your backend URL
     ANIMATION_ENABLED: true,
     AUTO_SCROLL: true,
     CLIENT_ID: 'client_' + Math.random().toString(36).substring(7)

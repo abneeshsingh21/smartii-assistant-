@@ -1,0 +1,26 @@
+{
+  "version": 2,
+  "name": "smartii-assistant",
+  "builds": [
+    {
+      "src": "frontend-v2/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "frontend-v2/public"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://your-backend-url.onrender.com/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend-v2/public/$1"
+    }
+  ],
+  "env": {
+    "NODE_ENV": "production"
+  }
+}
