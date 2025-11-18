@@ -583,18 +583,28 @@ function loadTheme() {
 
 // ============= Settings Management =============
 function updateSettings() {
+    console.log('🔧 Initializing settings controls...');
+    
     // Voice type
     const voiceType = document.getElementById('voiceType');
     if (voiceType) {
+        voiceType.value = state.settings.voiceType;
         voiceType.addEventListener('change', (e) => {
             state.settings.voiceType = e.target.value;
             localStorage.setItem('smartii-voice-type', e.target.value);
+            console.log('✅ Voice type changed to:', e.target.value);
+            addMessage(`Voice type changed to ${e.target.value}`, 'assistant');
         });
     }
     
     // Speech rate
     const speechRate = document.getElementById('speechRate');
     if (speechRate) {
+        speechRate.value = state.settings.speechRate;
+        const valueDisplay = speechRate.nextElementSibling;
+        if (valueDisplay) {
+            valueDisplay.textContent = state.settings.speechRate + 'x';
+        }
         speechRate.addEventListener('input', (e) => {
             state.settings.speechRate = parseFloat(e.target.value);
             const valueDisplay = e.target.nextElementSibling;
@@ -602,6 +612,7 @@ function updateSettings() {
                 valueDisplay.textContent = e.target.value + 'x';
             }
             localStorage.setItem('smartii-speech-rate', e.target.value);
+            console.log('✅ Speech rate changed to:', e.target.value);
         });
     }
     
@@ -612,6 +623,7 @@ function updateSettings() {
         alwaysListening.addEventListener('change', (e) => {
             state.settings.alwaysListening = e.target.checked;
             localStorage.setItem('smartii-always-listening', e.target.checked);
+            console.log('✅ Always listening:', e.target.checked);
             
             if (e.target.checked) {
                 state.settings.alwaysListening = true;
@@ -634,6 +646,33 @@ function updateSettings() {
             document.body.classList.toggle('no-animations', !e.target.checked);
             localStorage.setItem('smartii-animations', e.target.checked);
             updateStatus(e.target.checked ? 'Animations enabled' : 'Animations disabled', 'info');
+            console.log('✅ Animations:', e.target.checked);
+        });
+    }
+    
+    // Language selector
+    const language = document.getElementById('language');
+    if (language) {
+        language.value = state.settings.language;
+        language.addEventListener('change', (e) => {
+            state.settings.language = e.target.value;
+            localStorage.setItem('smartii-language', e.target.value);
+            
+            // Update speech recognition language
+            if (state.recognition) {
+                const langMap = {
+                    'en': 'en-US',
+                    'es': 'es-ES',
+                    'fr': 'fr-FR',
+                    'de': 'de-DE',
+                    'ja': 'ja-JP',
+                    'zh': 'zh-CN'
+                };
+                state.recognition.lang = langMap[e.target.value] || 'en-US';
+            }
+            
+            console.log('✅ Language changed to:', e.target.value);
+            addMessage(`Language changed to ${e.target.value}`, 'assistant');
         });
     }
     
@@ -645,6 +684,7 @@ function updateSettings() {
             state.settings.autoDetectLanguage = e.target.checked;
             localStorage.setItem('smartii-auto-detect', e.target.checked);
             updateStatus(e.target.checked ? 'Auto language detection ON' : 'Auto language detection OFF', 'info');
+            console.log('✅ Auto-detect language:', e.target.checked);
         });
     }
     
@@ -656,18 +696,6 @@ function updateSettings() {
             handleMemoryAction(title);
         });
     });
-    
-    // Language
-    const language = document.getElementById('language');
-    if (language) {
-        language.addEventListener('change', (e) => {
-            state.settings.language = e.target.value;
-            if (state.recognition) {
-                state.recognition.lang = e.target.value + '-US';
-            }
-            localStorage.setItem('smartii-language', e.target.value);
-        });
-    }
     
     // Theme options
     document.querySelectorAll('.theme-option').forEach(option => {
@@ -1007,6 +1035,9 @@ async function init() {
     // Update status
     updateStatus('Ready to assist', 'success');
     
+    // Setup modal handlers
+    setupModalHandlers();
+    
     // Initialize wake word detection
     if (hasMicPermission) {
         initWakeWordDetection();
@@ -1016,6 +1047,72 @@ async function init() {
     }
     
     console.log('✅ SMARTII UI Ready!');
+}
+
+// ============= Modal Handlers =============
+function setupModalHandlers() {
+    // Privacy modal
+    const privacyLink = document.getElementById('privacyLink');
+    const privacyModal = document.getElementById('privacyModal');
+    
+    // Terms modal
+    const termsLink = document.getElementById('termsLink');
+    const termsModal = document.getElementById('termsModal');
+    
+    // Docs modal
+    const docsLink = document.getElementById('docsLink');
+    const docsModal = document.getElementById('docsModal');
+    
+    // Open modals
+    if (privacyLink) {
+        privacyLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            privacyModal.classList.add('active');
+        });
+    }
+    
+    if (termsLink) {
+        termsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            termsModal.classList.add('active');
+        });
+    }
+    
+    if (docsLink) {
+        docsLink.addEventListener('click', (e) => {
+            e.preventDefault();
+            docsModal.classList.add('active');
+        });
+    }
+    
+    // Close modals
+    document.querySelectorAll('.modal-close').forEach(closeBtn => {
+        closeBtn.addEventListener('click', () => {
+            const modalId = closeBtn.getAttribute('data-modal');
+            const modal = document.getElementById(modalId);
+            if (modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+    
+    // Close modal when clicking outside
+    document.querySelectorAll('.modal').forEach(modal => {
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+            }
+        });
+    });
+    
+    // Close modal with Escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.modal.active').forEach(modal => {
+                modal.classList.remove('active');
+            });
+        }
+    });
 }
 
 // Start the app when DOM is ready

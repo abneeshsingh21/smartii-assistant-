@@ -66,8 +66,7 @@
                 </h1>
                 
                 <p class="hero-subtitle">
-                    Your JARVIS-level AI assistant with emotional intelligence, 
-                    proactive suggestions, and 40+ productivity tools
+                    Your intelligent AI assistant
                 </p>
 
                 <!-- Status Indicator -->
@@ -410,14 +409,193 @@
     <!-- Footer -->
     <footer class="footer">
         <div class="footer-content">
-            <p>&copy; 2025 SMARTII. Your JARVIS-level AI Assistant.</p>
+            <p>&copy; 2025 SMARTII by <strong>Abneesh Singh</strong></p>
             <div class="footer-links">
-                <a href="#privacy">Privacy</a>
-                <a href="#terms">Terms</a>
-                <a href="#docs">Docs</a>
+                <a href="#" id="privacyLink">Privacy</a>
+                <a href="#" id="termsLink">Terms</a>
+                <a href="#" id="docsLink">Docs</a>
             </div>
         </div>
     </footer>
+
+    <!-- Privacy Modal -->
+    <div id="privacyModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal="privacyModal">&times;</span>
+            <h2>Privacy Policy</h2>
+            <div class="modal-body">
+                <p><strong>Last Updated: November 18, 2025</strong></p>
+                
+                <h3>Data Collection</h3>
+                <p>SMARTII Assistant processes voice commands locally on your device. We collect:</p>
+                <ul>
+                    <li>Voice transcriptions (processed locally)</li>
+                    <li>User preferences and settings (stored in browser)</li>
+                    <li>Conversation history (stored locally)</li>
+                </ul>
+                
+                <h3>Data Usage</h3>
+                <p>Your data is used solely to:</p>
+                <ul>
+                    <li>Provide AI assistance and answer queries</li>
+                    <li>Improve response accuracy</li>
+                    <li>Personalize your experience</li>
+                    <li>Remember your preferences across sessions</li>
+                </ul>
+                
+                <h3>Data Storage</h3>
+                <p>All data is stored locally on your device using:</p>
+                <ul>
+                    <li>Browser localStorage for settings</li>
+                    <li>Local files for conversation history</li>
+                    <li>No data is sent to external servers without your consent</li>
+                </ul>
+                
+                <h3>Third-Party Services</h3>
+                <p>SMARTII may use external APIs for:</p>
+                <ul>
+                    <li>AI processing (Groq/OpenAI)</li>
+                    <li>Web search (DuckDuckGo)</li>
+                    <li>Translation services</li>
+                </ul>
+                
+                <h3>Your Rights</h3>
+                <p>You have the right to:</p>
+                <ul>
+                    <li>Clear all stored data anytime</li>
+                    <li>Export your conversation history</li>
+                    <li>Disable voice recording</li>
+                    <li>Delete your account and data</li>
+                </ul>
+                
+                <p><strong>Contact:</strong> For privacy concerns, contact Abneesh Singh</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Terms Modal -->
+    <div id="termsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal="termsModal">&times;</span>
+            <h2>Terms of Service</h2>
+            <div class="modal-body">
+                <p><strong>Last Updated: November 18, 2025</strong></p>
+                
+                <h3>Acceptance of Terms</h3>
+                <p>By using SMARTII Assistant, you agree to these terms. If you disagree, please discontinue use.</p>
+                
+                <h3>License</h3>
+                <p>SMARTII grants you a personal, non-transferable license to use this software for:</p>
+                <ul>
+                    <li>Personal productivity and assistance</li>
+                    <li>Smart home automation</li>
+                    <li>Voice-controlled tasks</li>
+                    <li>Educational purposes</li>
+                </ul>
+                
+                <h3>Acceptable Use</h3>
+                <p>You agree NOT to:</p>
+                <ul>
+                    <li>Use SMARTII for illegal activities</li>
+                    <li>Attempt to reverse engineer the system</li>
+                    <li>Share API keys or credentials</li>
+                    <li>Abuse rate limits or system resources</li>
+                    <li>Use for commercial purposes without permission</li>
+                </ul>
+                
+                <h3>Disclaimer</h3>
+                <p>SMARTII is provided "AS IS" without warranties. We are not liable for:</p>
+                <ul>
+                    <li>Incorrect responses or actions</li>
+                    <li>Data loss or system errors</li>
+                    <li>Third-party service failures</li>
+                    <li>Damages from system use</li>
+                </ul>
+                
+                <h3>Modifications</h3>
+                <p>We reserve the right to modify these terms at any time. Continued use constitutes acceptance.</p>
+                
+                <h3>Termination</h3>
+                <p>We may terminate your access for violations. You may terminate by uninstalling the software.</p>
+                
+                <p><strong>Developer:</strong> Abneesh Singh</p>
+                <p><strong>Contact:</strong> For questions, contact the developer</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Docs Modal -->
+    <div id="docsModal" class="modal">
+        <div class="modal-content">
+            <span class="modal-close" data-modal="docsModal">&times;</span>
+            <h2>Documentation</h2>
+            <div class="modal-body">
+                <h3>🎙️ Voice Commands</h3>
+                <ul>
+                    <li><strong>"Hey SMARTII"</strong> - Wake word to activate</li>
+                    <li><strong>"Open [app]"</strong> - Launch applications</li>
+                    <li><strong>"Send message to [contact]"</strong> - WhatsApp messaging</li>
+                    <li><strong>"Set alarm for [time]"</strong> - Create alarms</li>
+                    <li><strong>"Search for [query]"</strong> - Web search with RAG</li>
+                    <li><strong>"Calculate [expression]"</strong> - Math calculations</li>
+                    <li><strong>"Translate [text] to [language]"</strong> - Translation</li>
+                    <li><strong>"Find files [query]"</strong> - File search</li>
+                </ul>
+                
+                <h3>🚀 Features</h3>
+                <ul>
+                    <li><strong>RAG Web Search</strong> - Accurate answers with sources</li>
+                    <li><strong>Code Execution</strong> - Run Python code safely</li>
+                    <li><strong>File Management</strong> - Search, organize, analyze files</li>
+                    <li><strong>Smart Clipboard</strong> - History tracking (50 items)</li>
+                    <li><strong>Translation</strong> - 12+ languages supported</li>
+                    <li><strong>WhatsApp Integration</strong> - Auto-send messages</li>
+                    <li><strong>Alarm System</strong> - Windows Task Scheduler alarms</li>
+                    <li><strong>App Control</strong> - Open 40+ Windows apps</li>
+                    <li><strong>Memory System</strong> - Remembers conversations</li>
+                </ul>
+                
+                <h3>⚙️ Settings</h3>
+                <ul>
+                    <li><strong>Voice Type:</strong> Female/Male/Neutral</li>
+                    <li><strong>Speech Rate:</strong> 0.5x - 2.0x speed</li>
+                    <li><strong>Always Listening:</strong> Continuous conversation mode</li>
+                    <li><strong>Language:</strong> English, Spanish, French, German, etc.</li>
+                    <li><strong>Theme:</strong> Dark/Light mode</li>
+                </ul>
+                
+                <h3>🔧 Setup</h3>
+                <ol>
+                    <li>Install dependencies: <code>pip install -r requirements.txt</code></li>
+                    <li>Configure API keys in <code>.env</code> file</li>
+                    <li>Start backend: <code>python backend/app.py</code></li>
+                    <li>Start frontend: <code>npm start</code> in frontend-v2/</li>
+                    <li>Open browser: <code>http://localhost:3000</code></li>
+                </ol>
+                
+                <h3>📚 API Keys Needed</h3>
+                <ul>
+                    <li><strong>Groq API</strong> - For AI reasoning (Required)</li>
+                    <li><strong>OpenAI</strong> - For better speech recognition (Optional)</li>
+                    <li><strong>Home Assistant</strong> - For smart home (Optional)</li>
+                    <li><strong>Spotify</strong> - For music control (Optional)</li>
+                </ul>
+                
+                <h3>💡 Tips</h3>
+                <ul>
+                    <li>Speak clearly near microphone</li>
+                    <li>Use wake word "Hey SMARTII" for hands-free</li>
+                    <li>Enable "Always Listening" for continuous mode</li>
+                    <li>Check Settings for voice customization</li>
+                    <li>View docs folder for detailed guides</li>
+                </ul>
+                
+                <p><strong>Created by:</strong> Abneesh Singh</p>
+                <p><strong>Version:</strong> 2.0.0 - The Intelligence Update</p>
+                <p><strong>GitHub:</strong> <a href="https://github.com/abneeshsingh21/smartii-assistant-" target="_blank">smartii-assistant</a></p>
+            </div>
+        </div>
+    </div>
 
     <!-- Scripts -->
     <script type="module" src="/js/3d-visualization.js"></script>
