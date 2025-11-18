@@ -318,6 +318,13 @@ function startListening(continuous = false) {
         return;
     }
     
+    console.log('🎤 startListening called - continuous:', continuous);
+    console.log('Current state:', {
+        isListening: state.isListening,
+        isRecognitionActive: state.isRecognitionActive,
+        continuousListening: state.continuousListening
+    });
+    
     // Stop any existing recognition first
     if (state.isRecognitionActive) {
         console.warn('Recognition already active, stopping first');
@@ -354,12 +361,18 @@ function startListening(continuous = false) {
     
     // Start recognition
     try {
-        console.log(`Starting speech recognition... (${continuous ? 'continuous' : 'single-shot'} mode)`);
+        console.log(`🚀 Calling recognition.start()... Browser: ${navigator.userAgent.includes('Chrome') ? 'Chrome' : navigator.userAgent.includes('Edge') ? 'Edge' : 'Other'}`);
         state.recognition.start();
         state.isRecognitionActive = true;
         console.log('✅ Recognition start() called successfully');
+        console.log('⏳ Waiting for onstart event...');
     } catch (error) {
         console.error('❌ Failed to start recognition:', error);
+        console.error('Error details:', {
+            name: error.name,
+            message: error.message,
+            stack: error.stack
+        });
         
         // Reset UI on error
         elements.micButton.classList.remove('listening');
@@ -381,6 +394,7 @@ function startListening(continuous = false) {
             }, 500);
         } else {
             updateStatus('Failed to start: ' + error.message, 'error');
+            alert('Voice recognition error: ' + error.message + '\n\nPlease check:\n1. Microphone is connected\n2. Browser has mic permission\n3. Using Chrome/Edge/Safari');
         }
     }
 }
