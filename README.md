@@ -2,7 +2,7 @@
 
 **Created by: Abneesh Singh**
 
-🚀 **[Live Demo](https://smartii-assistant-lhftzbzcp-abneesh-singhs-projects-b0cc760e.vercel.app)** | 🔧 **[Backend API](https://smartii.onrender.com)** | 📚 **[Documentation](./DEPLOYMENT.md)** | 🐙 **[GitHub](https://github.com/abneeshsingh21/smartii-assistant-)**
+🚀 **[Live Demo](https://smartii-assistant-5lx6hby49-abneesh-singhs-projects-b0cc760e.vercel.app)** | 🔧 **[Backend API](https://smartii.onrender.com)** | 📚 **[Documentation](./DEPLOYMENT.md)** | 🐙 **[GitHub](https://github.com/abneeshsingh21/smartii-assistant-)**
 
 SMARTII is a next-generation AI voice assistant with RAG-powered web search, code execution, multi-language translation, file management, and smart automation - all accessible from any device!
 
