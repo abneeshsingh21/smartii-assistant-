@@ -3,13 +3,20 @@ SMARTII Wake Word Detection Service
 Always-on background "Hey SMARTII" detection using Porcupine
 """
 
-import pvporcupine
-import pyaudio
-import struct
 import logging
-import asyncio
 from typing import Callable, Optional
+import asyncio
 import threading
+
+# Optional imports for wake word detection
+try:
+    import pvporcupine
+    import pyaudio
+    import struct
+    WAKE_WORD_LIBS_AVAILABLE = True
+except ImportError:
+    WAKE_WORD_LIBS_AVAILABLE = False
+    logging.warning("Wake word libraries not available - feature disabled")
 
 logger = logging.getLogger(__name__)
 
@@ -79,6 +86,10 @@ class WakeWordDetector:
     
     def _detection_loop(self):
         """Main detection loop running in separate thread"""
+        if not WAKE_WORD_LIBS_AVAILABLE:
+            logger.error("Wake word libraries not available")
+            return
+            
         try:
             # Initialize Porcupine with custom keyword or built-in
             # For custom "Hey SMARTII" keyword, you need to train it on Picovoice Console
@@ -184,5 +195,27 @@ class WakeWordDetector:
             self.start(callback)
 
 
+class MockWakeWordDetector:
+    """Mock wake word detector for environments without libraries"""
+    
+    def __init__(self, *args, **kwargs):
+        self.is_running = False
+        self.sensitivity = 0.5
+        logger.info("Using mock wake word detector (libraries not available)")
+    
+    def start(self, callback):
+        logger.warning("Wake word detection not available on this platform")
+        self.is_running = False
+    
+    def stop(self):
+        self.is_running = False
+    
+    def set_sensitivity(self, sensitivity):
+        self.sensitivity = sensitivity
+
+
 # Global wake word detector instance
-wake_word_detector = WakeWordDetector(sensitivity=0.5)
+if WAKE_WORD_LIBS_AVAILABLE:
+    wake_word_detector = WakeWordDetector(sensitivity=0.5)
+else:
+    wake_word_detector = MockWakeWordDetector(sensitivity=0.5)
