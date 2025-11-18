@@ -74,7 +74,7 @@ function initSpeechRecognition() {
     
     // Main recognition for commands
     state.recognition = new SpeechRecognition();
-    state.recognition.continuous = false;
+    state.recognition.continuous = true;  // Keep listening
     state.recognition.interimResults = true;
     state.recognition.maxAlternatives = 3;
     state.recognition.lang = state.settings.language || 'en-US';
@@ -116,15 +116,23 @@ function initSpeechRecognition() {
         if (interimTranscript) {
             elements.transcriptionText.textContent = interimTranscript;
             elements.transcriptionBox.classList.add('active');
+            console.log('👂 Hearing: ' + interimTranscript);
         }
         
         // Process final results
         if (finalTranscript) {
+            console.log('✅ Final transcript: ' + finalTranscript);
             elements.transcriptionText.textContent = finalTranscript;
+            
+            // Stop recognition in single-shot mode
+            if (!state.continuousListening) {
+                stopListening();
+            }
+            
+            // Process the message
             setTimeout(() => {
                 processUserMessage(finalTranscript);
-                // Don't restart here - TTS will handle it after speaking
-            }, 500);
+            }, 200);
         }
     };
     
@@ -139,32 +147,35 @@ function initSpeechRecognition() {
             return;
         }
         
-        // Handle "no-speech" error - retry automatically
+        // Handle "no-speech" error - keep listening in continuous mode
         if (event.error === 'no-speech') {
-            console.log('⚠️ No speech detected. Make sure:');
-            console.log('  1. Your microphone is working and not muted');
-            console.log('  2. You speak within 3-5 seconds of clicking the mic button');
-            console.log('  3. You speak clearly and loud enough');
-            console.log('  4. Browser has microphone permission');
-            console.log('Retrying automatically...');
+            console.log('⚠️ No speech detected, but keeping microphone active...');
             
-            stopListening();
-            
-            // Show helpful message
-            updateStatus('No speech detected - Speak louder or check mic', 'error');
-            
-            // Retry after a short delay
-            setTimeout(() => {
-                if (state.isListening) {
-                    updateStatus('🎤 Listening again - Speak now!', 'listening');
-                    try {
-                        state.recognition.start();
-                    } catch (e) {
-                        console.error('Retry failed:', e);
-                        updateStatus('Please try again', 'error');
+            // In continuous mode, just restart
+            if (state.continuousListening && state.isListening) {
+                console.log('🔄 Continuous mode: Restarting after no-speech...');
+                setTimeout(() => {
+                    if (state.continuousListening && state.isListening) {
+                        try {
+                            state.recognition.start();
+                        } catch (e) {
+                            console.error('Restart failed:', e);
+                        }
                     }
-                }
-            }, 1000);
+                }, 300);
+            } else {
+                // In single-shot mode, show message but keep listening
+                updateStatus('🎤 Still listening - Speak now!', 'success');
+                setTimeout(() => {
+                    if (state.isListening && !state.continuousListening) {
+                        try {
+                            state.recognition.start();
+                        } catch (e) {
+                            console.error('Restart failed:', e);
+                        }
+                    }
+                }, 300);
+            }
             return;
         }
         
@@ -180,22 +191,24 @@ function initSpeechRecognition() {
     };
     
     state.recognition.onend = () => {
+        console.log('👂 Recognition ended. Listening state:', state.isListening);
         state.isRecognitionActive = false;
         
-        // Restart if continuous listening is enabled
-        if (state.continuousListening && !state.isSpeaking && state.isListening) {
+        // Restart if still supposed to be listening (both continuous and single-shot mode)
+        if (state.isListening && !state.isSpeaking) {
             try {
-                console.log('🔄 Continuous mode: Restarting recognition...');
+                console.log('🔄 Restarting recognition to keep listening...');
                 setTimeout(() => {
-                    if (state.continuousListening && state.isListening) {
+                    if (state.isListening && !state.isRecognitionActive) {
                         state.recognition.start();
                     }
-                }, 300);
+                }, 100);  // Quick restart
             } catch (error) {
                 console.error('Failed to restart recognition:', error);
             }
         } else {
-            // Single-shot mode: stop UI
+            // Really stopping: clean up UI
+            console.log('🛑 Stopping recognition completely');
             elements.micButton.classList.remove('listening');
             elements.waveformContainer.classList.remove('active');
             stopWaveformAnimation();
