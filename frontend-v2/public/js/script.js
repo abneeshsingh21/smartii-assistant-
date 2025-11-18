@@ -174,8 +174,13 @@ function initSpeechRecognition() {
         // Reset state
         state.isRecognitionActive = false;
         
-        // Ignore aborted errors (normal when stopping)
+        // Ignore aborted errors (caused by multiple recognition instances)
         if (event.error === 'aborted') {
+            console.log('⚠️ Recognition aborted - likely conflict with wake word detector');
+            // Stop wake word to prevent conflict
+            if (typeof wakeWordDetector !== 'undefined' && wakeWordDetector) {
+                wakeWordDetector.stop();
+            }
             return;
         }
         
@@ -370,6 +375,12 @@ function startListening(continuous = false) {
 }
 
 function startListeningInternal(continuous = false) {
+    // Stop wake word detector to prevent conflicts (Chrome allows only 1 SpeechRecognition)
+    if (typeof wakeWordDetector !== 'undefined' && wakeWordDetector) {
+        console.log('🛑 Stopping wake word detector to prevent conflict');
+        wakeWordDetector.stop();
+    }
+    
     // Set continuous mode
     state.continuousListening = continuous;
     state.isListening = true;
@@ -445,6 +456,14 @@ function stopListening() {
         } catch (error) {
             // Ignore errors when stopping
         }
+    }
+    
+    // Restart wake word detector after stopping manual recognition
+    if (typeof wakeWordDetector !== 'undefined' && wakeWordDetector) {
+        console.log('🔄 Restarting wake word detector');
+        setTimeout(() => {
+            wakeWordDetector.start();
+        }, 500); // Wait a bit to ensure recognition is fully stopped
     }
     
     // Hide transcription box after delay
