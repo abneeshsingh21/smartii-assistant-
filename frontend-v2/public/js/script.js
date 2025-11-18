@@ -103,9 +103,9 @@ function initSpeechRecognition() {
     
     // Main recognition for commands
     state.recognition = new SpeechRecognition();
-    state.recognition.continuous = true;  // Keep listening
+    state.recognition.continuous = false;  // Single-shot by default, prevents loops
     state.recognition.interimResults = true;
-    state.recognition.maxAlternatives = 3;
+    state.recognition.maxAlternatives = 1;
     state.recognition.lang = state.settings.language || 'en-US';
     
     // No separate wake word recognition - just use button activation
@@ -156,15 +156,13 @@ function initSpeechRecognition() {
             console.log('✅ Final transcript: ' + finalTranscript);
             elements.transcriptionText.textContent = finalTranscript;
             
-            // Stop recognition in single-shot mode
-            if (!state.continuousListening) {
-                stopListening();
-            }
+            // Always stop recognition immediately after getting transcript
+            stopListening();
             
             // Process the message
             setTimeout(() => {
                 processUserMessage(finalTranscript);
-            }, 200);
+            }, 300);
         }
     };
     
@@ -184,35 +182,11 @@ function initSpeechRecognition() {
             return;
         }
         
-        // Handle "no-speech" error - keep listening in continuous mode
+        // Handle "no-speech" error - just stop cleanly, don't restart
         if (event.error === 'no-speech') {
-            console.log('⚠️ No speech detected, but keeping microphone active...');
-            
-            // In continuous mode, just restart
-            if (state.continuousListening && state.isListening) {
-                console.log('🔄 Continuous mode: Restarting after no-speech...');
-                setTimeout(() => {
-                    if (state.continuousListening && state.isListening) {
-                        try {
-                            state.recognition.start();
-                        } catch (e) {
-                            console.error('Restart failed:', e);
-                        }
-                    }
-                }, 300);
-            } else {
-                // In single-shot mode, show message but keep listening
-                updateStatus('🎤 Still listening - Speak now!', 'success');
-                setTimeout(() => {
-                    if (state.isListening && !state.continuousListening) {
-                        try {
-                            state.recognition.start();
-                        } catch (e) {
-                            console.error('Restart failed:', e);
-                        }
-                    }
-                }, 300);
-            }
+            console.log('⚠️ No speech detected - stopping recognition');
+            stopListening();
+            updateStatus('No speech detected. Tap mic to try again.', 'info');
             return;
         }
         
@@ -228,28 +202,18 @@ function initSpeechRecognition() {
     };
     
     state.recognition.onend = () => {
-        console.log('👂 Recognition ended. Listening state:', state.isListening, 'Continuous:', state.continuousListening, 'Speaking:', state.isSpeaking);
+        console.log('👂 Recognition ended. Continuous:', state.continuousListening, 'Speaking:', state.isSpeaking);
         state.isRecognitionActive = false;
+        state.isListening = false;
         
-        // Only restart if in continuous mode AND not currently speaking
-        if (state.isListening && state.continuousListening && !state.isSpeaking) {
-            try {
-                console.log('🔄 Restarting continuous recognition...');
-                setTimeout(() => {
-                    if (state.isListening && state.continuousListening && !state.isRecognitionActive && !state.isSpeaking) {
-                        state.recognition.start();
-                    }
-                }, 500);  // Longer delay to avoid hearing own voice
-            } catch (error) {
-                console.error('Failed to restart recognition:', error);
-            }
-        } else {
-            // Really stopping: clean up UI
-            console.log('🛑 Stopping recognition completely');
-            elements.micButton.classList.remove('listening');
-            elements.waveformContainer.classList.remove('active');
-            stopWaveformAnimation();
-        }
+        // Clean up UI completely - NO auto-restart
+        console.log('🛑 Recognition ended - cleaning up UI');
+        elements.micButton.classList.remove('listening');
+        elements.waveformContainer.classList.remove('active');
+        stopWaveformAnimation();
+        
+        // Reset continuous mode
+        state.continuousListening = false;
         
         // Deactivate holographic sphere
         if (holographicSphere) {
@@ -381,9 +345,12 @@ function startListeningInternal(continuous = false) {
         wakeWordDetector.stop();
     }
     
-    // Set continuous mode
+    // Set continuous mode on recognition object
+    state.recognition.continuous = continuous;
     state.continuousListening = continuous;
     state.isListening = true;
+    
+    console.log('🎤 Recognition mode:', continuous ? 'CONTINUOUS' : 'SINGLE-SHOT');
     
     console.log(`🎤 Starting recognition - Continuous: ${continuous}, isListening: ${state.isListening}`);
     
@@ -476,15 +443,22 @@ function stopListening() {
 async function processUserMessage(text) {
     if (!text.trim()) return;
     
-    // Stop listening immediately to prevent hearing our own response
-    if (state.recognition && state.isListening) {
+    // CRITICAL: Stop ALL listening immediately to prevent feedback loop
+    if (state.recognition) {
         try {
             state.recognition.stop();
             state.isListening = false;
             state.isRecognitionActive = false;
+            state.continuousListening = false;
+            console.log('🛑 Recognition stopped before processing message');
         } catch (e) {
             // Ignore errors
         }
+    }
+    
+    // Stop wake word detector too
+    if (typeof wakeWordDetector !== 'undefined' && wakeWordDetector) {
+        wakeWordDetector.stop();
     }
     
     // Check for stop/deactivate commands
@@ -690,42 +664,28 @@ function speakText(text) {
         utterance.voice = selectedVoice;
     }
     
-    // Restart listening after speech ends (only if continuous mode is on)
+    // Restart listening after speech ends (ONLY if always listening is explicitly enabled)
     utterance.onend = () => {
         console.log('🔊 Speech finished');
         state.isSpeaking = false;
         
-        // Wait longer to ensure audio output has fully stopped
-        setTimeout(() => {
-            if (state.settings.alwaysListening && !state.isSpeaking) {
-                console.log('🔄 Restarting continuous listening after speech...');
-                startListening(true); // Pass true for continuous mode
-            } else {
-                console.log('✅ Speech ended - NOT restarting (continuous mode OFF)');
-                // Just restart wake word detection for button activation
-                if (wakeWordDetector && !wakeWordDetector.isActive) {
-                    wakeWordDetector.start();
-                    console.log('✅ Wake word detection resumed');
+        // Only restart if alwaysListening setting is ON (from settings toggle)
+        if (state.settings.alwaysListening === true) {
+            console.log('🔄 Always listening enabled - restarting after 5 seconds...');
+            setTimeout(() => {
+                if (state.settings.alwaysListening && !state.isSpeaking) {
+                    startListening(true); // True continuous mode
                 }
-            }
-        }, 3000); // Longer delay to avoid hearing own voice
+            }, 5000); // Long delay to ensure no feedback
+        } else {
+            console.log('✅ Speech ended - NOT auto-restarting (tap mic to speak again)');
+        }
     };
     
     utterance.onerror = (event) => {
-        console.error('🔊 Speech error:', event);
+        console.error('🔊 Speech synthesis error:', event);
         state.isSpeaking = false;
-        
-        // Only restart on error if continuous mode is explicitly enabled
-        if (state.settings.alwaysListening && !state.isSpeaking) {
-            setTimeout(() => {
-                startListening(true);
-            }, 2000);
-        } else {
-            // Restart wake word only
-            if (wakeWordDetector && !wakeWordDetector.isActive) {
-                wakeWordDetector.start();
-            }
-        }
+        // Don't restart on error - let user tap mic again
     };
     
     state.synthesis.speak(utterance);
@@ -1143,6 +1103,12 @@ function init3DVisualization() {
 let wakeWordDetector = null;
 
 function initWakeWordDetection() {
+    // Skip on mobile to prevent conflicts
+    if (window.DISABLE_WAKE_WORD) {
+        console.log('📱 Wake word disabled on mobile');
+        return;
+    }
+    
     if (typeof BrowserWakeWordDetector === 'undefined') {
         console.warn('Wake word detector not loaded');
         return;

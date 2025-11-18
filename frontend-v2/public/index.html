@@ -687,6 +687,13 @@
         
         // Keep page alive to prevent bfcache
         window.addEventListener('unload', function() {});
+        
+        // Disable wake word on mobile to prevent conflicts
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            console.log('📱 Mobile detected - wake word disabled to prevent conflicts');
+            window.DISABLE_WAKE_WORD = true;
+        }
     </script>
     <script type="module" src="/js/3d-visualization.js"></script>
     <script src="/js/wake-word-detector.js"></script>

@@ -11,6 +11,12 @@ class BrowserWakeWordDetector {
         this.onWakeWordCallback = null;
         this.sensitivity = 0.7; // Threshold for fuzzy matching
         
+        // Check if disabled (e.g., on mobile)
+        if (window.DISABLE_WAKE_WORD) {
+            console.log('⚠️ Wake word detection DISABLED by configuration');
+            this.disabled = true;
+        }
+        
         console.log('🎤 Browser Wake Word Detector initialized');
     }
     
@@ -18,6 +24,11 @@ class BrowserWakeWordDetector {
      * Initialize wake word detection
      */
     initialize() {
+        if (this.disabled) {
+            console.log('⚠️ Wake word detection is disabled');
+            return false;
+        }
+        
         const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
         
         if (!SpeechRecognition) {
@@ -112,6 +123,10 @@ class BrowserWakeWordDetector {
      * Start wake word detection
      */
     start() {
+        if (this.disabled) {
+            return false;
+        }
+        
         if (!this.recognition) {
             console.error('Recognition not initialized');
             return false;
