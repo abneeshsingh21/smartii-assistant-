@@ -1,0 +1,18 @@
+# SMARTII Desktop Requirements
+# Python packages needed for desktop assistant
+
+# Core requirements
+SpeechRecognition
+PyAudio
+pyttsx3
+keyboard
+pystray
+Pillow
+
+# Windows audio control
+pycaw
+comtypes
+pywin32
+
+# HTTP client
+requests
