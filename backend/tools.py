@@ -907,7 +907,7 @@ Add-Type -AssemblyName System.Windows.Forms
         try:
             app_name = params.get("app", "")
             if not windows_controller:
-                return {"status": "error", "message": "Windows control not available"}
+                return {"status": "error", "message": "This feature is only available on Windows devices running SMARTII locally. It's not supported on the web version."}
             
             result = windows_controller.open_app(app_name)
             return result
@@ -920,7 +920,7 @@ Add-Type -AssemblyName System.Windows.Forms
         try:
             app_name = params.get("app", "")
             if not windows_controller:
-                return {"status": "error", "message": "Windows control not available"}
+                return {"status": "error", "message": "This feature is only available on Windows devices running SMARTII locally. It's not supported on the web version."}
             
             result = windows_controller.close_app(app_name)
             return result
@@ -961,7 +961,10 @@ Add-Type -AssemblyName System.Windows.Forms
             to = params.get("to", "")
             video = params.get("video", False)
             if not windows_controller:
-                return {"status": "error", "message": "Windows control not available"}
+                return {
+                    "status": "error", 
+                    "message": "WhatsApp calling is only available on Windows devices running SMARTII locally. This feature requires WhatsApp Desktop to be installed and cannot work on the web version."
+                }
             
             result = windows_controller.whatsapp_call(to, video)
             if result.get("success"):
