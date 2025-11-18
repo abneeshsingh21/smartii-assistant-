@@ -24,11 +24,19 @@ from voice import VoiceProcessor
 from conversation import ConversationHandler
 from tools import ToolOrchestrator
 from state_machine import voice_state, State
-from wake_word import wake_word_detector
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
+
+# Optional imports for local-only features
+try:
+    from wake_word import wake_word_detector
+    WAKE_WORD_AVAILABLE = True
+except ImportError:
+    logger.warning("Wake word detection not available - using mock implementation")
+    wake_word_detector = None
+    WAKE_WORD_AVAILABLE = False
 
 app = FastAPI(title="SMARTII Backend", version="1.0.0")
 
@@ -783,21 +791,29 @@ async def websocket_endpoint(websocket: WebSocket, client_id: str):
             
             elif msg_type == "wake_word_enable":
                 # Enable wake word detection
-                sensitivity = message_data.get("sensitivity", 0.5)
-                wake_word_detector.set_sensitivity(sensitivity)
-                
-                if not wake_word_detector.is_running:
-                    wake_word_detector.start(on_wake_word_detected)
-                
-                await manager.send_personal_message(json.dumps({
-                    "type": "wake_word_status",
-                    "enabled": True,
-                    "sensitivity": sensitivity
-                }), client_id)
+                if WAKE_WORD_AVAILABLE and wake_word_detector:
+                    sensitivity = message_data.get("sensitivity", 0.5)
+                    wake_word_detector.set_sensitivity(sensitivity)
+                    
+                    if not wake_word_detector.is_running:
+                        wake_word_detector.start(on_wake_word_detected)
+                    
+                    await manager.send_personal_message(json.dumps({
+                        "type": "wake_word_status",
+                        "enabled": True,
+                        "sensitivity": sensitivity
+                    }), client_id)
+                else:
+                    await manager.send_personal_message(json.dumps({
+                        "type": "wake_word_status",
+                        "enabled": False,
+                        "error": "Wake word detection not available"
+                    }), client_id)
             
             elif msg_type == "wake_word_disable":
                 # Disable wake word detection
-                wake_word_detector.stop()
+                if WAKE_WORD_AVAILABLE and wake_word_detector:
+                    wake_word_detector.stop()
                 
                 await manager.send_personal_message(json.dumps({
                     "type": "wake_word_status",
