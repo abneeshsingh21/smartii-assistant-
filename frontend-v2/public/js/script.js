@@ -1080,6 +1080,133 @@ function initWakeWordDetection() {
     }
 }
 
+// ============= User Greeting & Profile =============
+async function checkUserGreeting() {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/greeting`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ client_id: CONFIG.CLIENT_ID })
+        });
+        
+        const data = await response.json();
+        
+        if (data.is_new_user) {
+            // Show welcome modal for first-time users
+            showWelcomeModal();
+        } else {
+            // Show personalized greeting
+            addMessage(data.greeting, 'assistant');
+            speak(data.greeting);
+        }
+    } catch (error) {
+        console.error('Error getting greeting:', error);
+        addMessage('Hello! I\'m SMARTII, your AI assistant. How can I help you today?', 'assistant');
+    }
+}
+
+function showWelcomeModal() {
+    const modal = document.getElementById('welcomeModal');
+    if (!modal) return;
+    
+    modal.style.display = 'flex';
+    
+    // Setup event listeners
+    const saveNameButton = document.getElementById('saveNameButton');
+    const gmailLoginButton = document.getElementById('gmailLoginButton');
+    const skipWelcomeButton = document.getElementById('skipWelcomeButton');
+    const userNameInput = document.getElementById('userNameInput');
+    
+    // Save name and close modal
+    saveNameButton.addEventListener('click', async () => {
+        const name = userNameInput.value.trim();
+        
+        if (!name) {
+            alert('Please enter your name');
+            return;
+        }
+        
+        await saveUserName(name);
+        modal.style.display = 'none';
+    });
+    
+    // Gmail login
+    gmailLoginButton.addEventListener('click', async () => {
+        await initiateGmailLogin();
+    });
+    
+    // Skip welcome
+    skipWelcomeButton.addEventListener('click', () => {
+        modal.style.display = 'none';
+        addMessage('Hello! I\'m SMARTII, your AI assistant. Feel free to ask me anything!', 'assistant');
+    });
+    
+    // Enter key to save name
+    userNameInput.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            saveNameButton.click();
+        }
+    });
+}
+
+async function saveUserName(name) {
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/set-name`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                client_id: CONFIG.CLIENT_ID,
+                name: name
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            addMessage(data.message, 'assistant');
+            speak(data.message);
+        }
+    } catch (error) {
+        console.error('Error saving name:', error);
+        addMessage(`Nice to meet you, ${name}! I'll remember your name.`, 'assistant');
+    }
+}
+
+async function initiateGmailLogin() {
+    // This is a simplified version - for production, you'd use OAuth2
+    const email = prompt('Please enter your Gmail address:');
+    
+    if (!email || !email.includes('@')) {
+        alert('Please enter a valid email address');
+        return;
+    }
+    
+    const name = document.getElementById('userNameInput').value.trim() || email.split('@')[0];
+    
+    try {
+        const response = await fetch(`${CONFIG.API_BASE_URL}/gmail-login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ 
+                client_id: CONFIG.CLIENT_ID,
+                email: email,
+                name: name
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            document.getElementById('welcomeModal').style.display = 'none';
+            addMessage(data.message, 'assistant');
+            speak(`Welcome back, ${name}! Your profile is now synced with ${email}`);
+        }
+    } catch (error) {
+        console.error('Error with Gmail login:', error);
+        alert('Could not connect to Gmail. Please try again.');
+    }
+}
+
 async function init() {
     console.log('🚀 SMARTII UI Initializing...');
     
@@ -1124,6 +1251,9 @@ async function init() {
             console.log('Voices loaded:', state.synthesis.getVoices().length);
         });
     }
+    
+    // Check for user greeting
+    await checkUserGreeting();
     
     // Update status
     updateStatus('Ready to assist', 'success');

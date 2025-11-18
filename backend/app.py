@@ -24,6 +24,7 @@ from voice import VoiceProcessor
 from conversation import ConversationHandler
 from tools import ToolOrchestrator
 from state_machine import voice_state, State
+from user_profile import user_profile_manager
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -267,6 +268,70 @@ async def v1_chat(request: ChatRequest):
         logger.error(f"/v1/chat error: {e}")
         raise HTTPException(status_code=500, detail="Internal server error")
 
+# User profile endpoints
+@app.post("/greeting")
+async def get_greeting(request: dict):
+    """Get personalized greeting for user"""
+    client_id = request.get("client_id", "default")
+    
+    greeting = user_profile_manager.get_greeting(client_id)
+    profile = user_profile_manager.get_profile(client_id)
+    
+    return {
+        "greeting": greeting,
+        "is_new_user": profile is None,
+        "profile": profile
+    }
+
+@app.post("/set-name")
+async def set_user_name(request: dict):
+    """Set user's name after first interaction"""
+    client_id = request.get("client_id", "default")
+    name = request.get("name", "")
+    
+    if not name:
+        raise HTTPException(status_code=400, detail="Name is required")
+    
+    profile = user_profile_manager.get_profile(client_id)
+    
+    if profile:
+        # Update existing profile
+        profile = user_profile_manager.update_profile(client_id, {"name": name})
+    else:
+        # Create new profile
+        profile = user_profile_manager.create_profile(client_id, name)
+    
+    return {
+        "success": True,
+        "message": f"Great to meet you, {name}! I'll remember your name from now on.",
+        "profile": profile
+    }
+
+@app.post("/gmail-login")
+async def gmail_login(request: dict):
+    """Associate Gmail account with user profile"""
+    client_id = request.get("client_id", "default")
+    email = request.get("email", "")
+    name = request.get("name", "")
+    
+    if not email:
+        raise HTTPException(status_code=400, detail="Email is required")
+    
+    profile = user_profile_manager.get_profile(client_id)
+    
+    if profile:
+        # Update existing profile with email
+        profile = user_profile_manager.update_profile(client_id, {"email": email})
+    else:
+        # Create new profile with email
+        profile = user_profile_manager.create_profile(client_id, name or "User", email)
+    
+    return {
+        "success": True,
+        "message": f"Successfully linked {email} to your profile!",
+        "profile": profile
+    }
+
 # Simple chat endpoint for frontend
 @app.post("/chat")
 async def chat(request: dict):
@@ -308,6 +373,9 @@ async def chat(request: dict):
         # Normal processing for other messages
         response = await ai_engine.process_message(message, context, client_id)
         await conversation_handler.update_conversation(client_id, message, response)
+        
+        # Increment user interaction count
+        user_profile_manager.increment_interaction(client_id)
         
         return {
             "response": response,
