@@ -22,6 +22,8 @@ const state = {
     isListening: false,
     isProcessing: false,
     isSpeaking: false,
+    isRecognitionActive: false,
+    continuousListening: false,  // New: continuous mode
     recognition: null,
     synthesis: window.speechSynthesis,
     waveformAnimation: null,
@@ -179,10 +181,25 @@ function initSpeechRecognition() {
     
     state.recognition.onend = () => {
         state.isRecognitionActive = false;
-        elements.micButton.classList.remove('listening');
-        elements.waveformContainer.classList.remove('active');
-        stopWaveformAnimation();
-        // Don't auto-restart here - let TTS onend handle it to avoid feedback loop
+        
+        // Restart if continuous listening is enabled
+        if (state.continuousListening && !state.isSpeaking && state.isListening) {
+            try {
+                console.log('🔄 Continuous mode: Restarting recognition...');
+                setTimeout(() => {
+                    if (state.continuousListening && state.isListening) {
+                        state.recognition.start();
+                    }
+                }, 300);
+            } catch (error) {
+                console.error('Failed to restart recognition:', error);
+            }
+        } else {
+            // Single-shot mode: stop UI
+            elements.micButton.classList.remove('listening');
+            elements.waveformContainer.classList.remove('active');
+            stopWaveformAnimation();
+        }
         
         // Deactivate holographic sphere
         if (holographicSphere) {
@@ -262,21 +279,34 @@ function toggleListening() {
     }
 }
 
-function startListening() {
+function startListening(continuous = false) {
     if (!state.recognition) {
         alert('Speech recognition is not supported in your browser. Please use Chrome, Edge, or Safari.');
         return;
     }
     
     // Don't start if already listening
-    if (state.isListening || state.isRecognitionActive) {
+    if (state.isRecognitionActive) {
         console.warn('Recognition already active, skipping start');
         return;
     }
     
+    // Set continuous mode
+    state.continuousListening = continuous;
+    state.isListening = true;
+    
+    // Update UI based on mode
+    if (continuous) {
+        elements.listeningText.textContent = '🔴 Continuous Listening';
+        updateStatus('🔴 Continuous mode - Always listening', 'success');
+    } else {
+        elements.listeningText.textContent = 'Listening... Speak now!';
+        updateStatus('🎤 Listening - Speak now!', 'success');
+    }
+    
     // Start recognition
     try {
-        console.log('Starting speech recognition...');
+        console.log(`Starting speech recognition... (${continuous ? 'continuous' : 'single-shot'} mode)`);
         state.recognition.start();
     } catch (error) {
         console.error('Failed to start recognition:', error);
@@ -285,6 +315,8 @@ function startListening() {
         if (error.message && error.message.includes('permission')) {
             updateStatus('Microphone access denied', 'error');
             alert('SMARTII needs microphone access. Please allow microphone permissions in your browser.');
+        } else if (error.message && error.message.includes('already started')) {
+            console.warn('Recognition already started');
         } else {
             updateStatus('Failed to start: ' + error.message, 'error');
         }
@@ -294,10 +326,12 @@ function startListening() {
 function stopListening() {
     state.isListening = false;
     state.isRecognitionActive = false;
+    state.continuousListening = false;  // Stop continuous mode
     elements.micButton.classList.remove('listening');
     elements.waveformContainer.classList.remove('active');
     elements.listeningText.textContent = 'Tap to speak';
     stopWaveformAnimation();
+    updateStatus('Ready', 'success');
     
     if (state.recognition) {
         try {
@@ -1122,6 +1156,24 @@ function setupModalHandlers() {
             document.querySelectorAll('.modal.active').forEach(modal => {
                 modal.classList.remove('active');
             });
+        }
+        
+        // Spacebar to toggle microphone (if not typing in input)
+        if (e.code === 'Space' && e.target !== elements.textInput) {
+            e.preventDefault();
+            toggleListening();
+        }
+        
+        // Ctrl+Shift+L for continuous listening mode
+        if (e.ctrlKey && e.shiftKey && e.key === 'L') {
+            e.preventDefault();
+            if (state.continuousListening) {
+                stopListening();
+                addMessage('Continuous listening disabled', 'assistant');
+            } else {
+                startListening(true);  // Enable continuous mode
+                addMessage('Continuous listening enabled - I\'ll keep listening after each response', 'assistant');
+            }
         }
     });
 }
