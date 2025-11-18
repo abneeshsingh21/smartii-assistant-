@@ -276,6 +276,36 @@ async def chat(request: dict):
         client_id = request.get("client_id", "default")
         
         context = await conversation_handler.get_context(client_id)
+        
+        # Check if message is a music/YouTube play request
+        if any(keyword in message.lower() for keyword in ['play', 'music', 'song', 'video']):
+            # Extract query
+            import re
+            # Remove common command words
+            query = message.lower()
+            for word in ['play', 'music', 'song', 'video', 'the', 'a', 'an', 'some']:
+                query = re.sub(rf'\b{word}\b', '', query, flags=re.IGNORECASE)
+            query = query.strip()
+            
+            if query:
+                # Call music_play tool directly
+                tool_orchestrator = ToolOrchestrator()
+                result = await tool_orchestrator.music_play({"query": query}, {})
+                
+                response = await ai_engine.process_message(message, context, client_id)
+                await conversation_handler.update_conversation(client_id, message, response)
+                
+                # Return response with URL if available
+                return {
+                    "response": response,
+                    "text": response,
+                    "client_id": client_id,
+                    "url": result.get("url"),
+                    "open_url": result.get("status") in ["playing", "search"],
+                    "video_id": result.get("video_id")
+                }
+        
+        # Normal processing for other messages
         response = await ai_engine.process_message(message, context, client_id)
         await conversation_handler.update_conversation(client_id, message, response)
         

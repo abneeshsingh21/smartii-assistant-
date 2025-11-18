@@ -312,6 +312,8 @@ function startListening(continuous = false) {
     state.continuousListening = continuous;
     state.isListening = true;
     
+    console.log(`🎤 Starting recognition - Continuous: ${continuous}, isListening: ${state.isListening}`);
+    
     // Update UI based on mode
     if (continuous) {
         elements.listeningText.textContent = '🔴 Continuous Listening';
@@ -325,8 +327,9 @@ function startListening(continuous = false) {
     try {
         console.log(`Starting speech recognition... (${continuous ? 'continuous' : 'single-shot'} mode)`);
         state.recognition.start();
+        console.log('✅ Recognition start() called successfully');
     } catch (error) {
-        console.error('Failed to start recognition:', error);
+        console.error('❌ Failed to start recognition:', error);
         
         // Check if it's a permission issue
         if (error.message && error.message.includes('permission')) {
@@ -453,9 +456,13 @@ async function sendMessageToBackend(text) {
         }
         
         const data = await response.json();
+        console.log('Backend response:', data);  // Debug log
         return {
             text: data.response || data.text || 'I received your message.',
-            actions: data.actions || []
+            actions: data.actions || [],
+            url: data.url,  // Pass through URL
+            open_url: data.open_url,  // Pass through flag
+            video_id: data.video_id  // YouTube video ID
         };
     } catch (error) {
         console.error('Error connecting to backend:', error);
