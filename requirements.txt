@@ -43,4 +43,3 @@ lxml==5.1.0
 
 # Relaxed version constraints for better compatibility
 numpy<2.0.0
-```
