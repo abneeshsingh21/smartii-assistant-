@@ -95,29 +95,49 @@ class UserProfileManager:
         profile = self.get_profile(user_id)
         
         if not profile:
-            return "Hello! I'm SMARTII, your AI assistant. May I know your name?"
+            return "Hey! I'm SMARTII, your AI buddy. What's your name? 😊"
         
         name = profile.get("name", "friend")
         hour = datetime.now().hour
         
-        # Time-based greetings
+        # Time-based casual greetings
         if 5 <= hour < 12:
-            greeting = f"Good morning, {name}!"
+            greetings = [
+                f"Morning, {name}! ☕",
+                f"Hey {name}! Early bird today, huh?",
+                f"Yo {name}! What's good this morning?"
+            ]
         elif 12 <= hour < 17:
-            greeting = f"Good afternoon, {name}!"
+            greetings = [
+                f"Hey {name}! How's your day going? 😎",
+                f"Yo {name}! What's up?",
+                f"Hey there, {name}! What's happening?"
+            ]
         elif 17 <= hour < 22:
-            greeting = f"Good evening, {name}!"
+            greetings = [
+                f"Evening, {name}! How was your day? 🌆",
+                f"Yo {name}! Long day?",
+                f"Hey {name}! Ready to chill?"
+            ]
         else:
-            greeting = f"Hello, {name}!"
+            greetings = [
+                f"Hey {name}! Burning the midnight oil? 🌙",
+                f"Yo {name}! Still up, huh?",
+                f"Hey there, {name}! Late night?"
+            ]
+        
+        # Pick a random greeting for variety
+        import random
+        greeting = random.choice(greetings)
         
         # Add personalized touch based on usage
         sessions = profile["stats"].get("total_sessions", 1)
         if sessions == 1:
-            greeting += " It's great to see you again for the first time! How can I help you today?"
+            greeting += " Great to see you again!"
         elif sessions < 5:
-            greeting += " Welcome back! What can I do for you?"
+            greeting += " Good to have you back! 😊"
         else:
-            greeting += " Always a pleasure! What's on your mind?"
+            greeting += " Always a pleasure, my friend! 💪"
         
         return greeting
     
